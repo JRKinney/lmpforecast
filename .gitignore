@@ -1,0 +1,41 @@
+# Ignore virtual environment
+.venv/
+
+# Ignore Python cache files
+__pycache__/
+*.py[cod]
+
+# Ignore Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Ignore environment variables
+.env
+
+# Ignore output directories
+outputs/
+
+# Ignore model files
+models/saved/
+
+# Ignore compiled files
+*.so
+*.dylib
+
+# Ignore logs
+*.log
+
+# Ignore temporary files
+*.tmp
+*.temp
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+
+# Ignore mypy cache
+.mypy_cache/ 
