@@ -7,14 +7,12 @@ through Pandera schemas.
 
 import os
 from datetime import datetime
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
-from pandera.decorators import check_types
-from pandera.typing import DataFrame
 
-from src.utils.schemas import WeatherDataSchema
+from src.utils.schemas import WeatherDataFrame
 
 
 class ErcotWeatherData:
@@ -26,7 +24,7 @@ class ErcotWeatherData:
     - Apply transformations for analysis and modeling
     """
 
-    def __init__(self, data_dir: Optional[str] = None):
+    def __init__(self, data_dir: str | None = None):
         """Initialize the ERCOT weather data loader.
 
         Args:
@@ -52,14 +50,13 @@ class ErcotWeatherData:
             "El Paso": (31.7619, -106.4850),
         }
 
-    @check_types
     def load_data(
         self,
-        start_date: Union[str, datetime],
-        end_date: Union[str, datetime],
+        start_date: str | datetime,
+        end_date: str | datetime,
         location: str = "Houston",
-        resample_freq: Optional[str] = None,
-    ) -> "DataFrame[WeatherDataSchema]":
+        resample_freq: str | None = None,
+    ) -> WeatherDataFrame:
         """Load weather data for a specified date range and location.
 
         Args:
@@ -170,7 +167,7 @@ class ErcotWeatherData:
         # Return data (validation handled by decorator)
         return weather_data
 
-    def get_available_locations(self) -> Dict[str, Tuple[float, float]]:
+    def get_available_locations(self) -> dict[str, tuple[float, float]]:
         """Get a dictionary of available locations with their coordinates.
 
         Returns:
@@ -178,13 +175,12 @@ class ErcotWeatherData:
         """
         return self.available_locations.copy()
 
-    @check_types
     def clean_outliers(
         self,
-        data: DataFrame[WeatherDataSchema],
+        data: WeatherDataFrame,
         method: str = "iqr",
         threshold: float = 3.0,
-    ) -> DataFrame[WeatherDataSchema]:
+    ) -> WeatherDataFrame:
         """Clean outliers in weather data.
 
         Args:
@@ -245,10 +241,7 @@ class ErcotWeatherData:
         # Return cleaned data (validation handled by decorator)
         return cleaned_data
 
-    @check_types
-    def calculate_summary_statistics(
-        self, data: DataFrame[WeatherDataSchema]
-    ) -> Dict[str, Any]:
+    def calculate_summary_statistics(self, data: WeatherDataFrame) -> dict[str, Any]:
         """Calculate summary statistics for the weather data.
 
         Args:
@@ -262,7 +255,7 @@ class ErcotWeatherData:
         # Variables to analyze
         variables = ["temperature", "humidity", "wind_speed", "solar_irradiance"]
 
-        stats: Dict[str, Any] = {}
+        stats: dict[str, Any] = {}
         for var in variables:
             stats[var] = {
                 "mean": float(data[var].mean()),
@@ -288,9 +281,8 @@ class ErcotWeatherData:
 
         return stats
 
-    @check_types
     def get_extreme_weather_events(
-        self, data: DataFrame[WeatherDataSchema], percentile_threshold: float = 0.95
+        self, data: WeatherDataFrame, percentile_threshold: float = 0.95
     ) -> pd.DataFrame:
         """Identify extreme weather events in the data.
 

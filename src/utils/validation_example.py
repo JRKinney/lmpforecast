@@ -9,10 +9,8 @@ This script demonstrates how to:
 
 import os
 import sys
-from typing import Tuple
 
 import pandas as pd
-from pandera.decorators import check_types
 
 # Add the project root to the path if running this file directly
 if __name__ == "__main__":
@@ -23,7 +21,7 @@ from src.data.ercot_weather_data import ErcotWeatherData
 from src.utils.schemas import ForecastSchema, PriceDataFrame, PriceDataSchema
 
 
-def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
+def validate_data_example() -> tuple[pd.DataFrame, pd.DataFrame]:
     """Example of how to validate data using Pandera schemas and decorators.
 
     Returns:
@@ -105,7 +103,6 @@ def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     print("\n5. Using check_types decorator for runtime validation:")
 
-    @check_types
     def process_data(df: PriceDataFrame) -> PriceDataFrame:
         """Process price data with validation via decorator."""
         # This will be validated both on input and output

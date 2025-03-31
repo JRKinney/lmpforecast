@@ -1,8 +1,5 @@
-from typing import List, Optional, Tuple
-
 import numpy as np
 import pandas as pd
-from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from sklearn.preprocessing import StandardScaler
 from tensorflow import keras
@@ -26,12 +23,12 @@ class NNModel:
         """
         self.seq_length = seq_length
         self.forecast_horizon = forecast_horizon
-        self.model: Optional[keras.Model] = None
+        self.model: keras.Model | None = None
         self.price_scaler = StandardScaler()
         self.weather_scaler = StandardScaler()
-        self.feature_names: Optional[List[str]] = None
+        self.feature_names: list[str] | None = None
 
-    def _build_model(self, input_shape: Tuple[int, int]) -> keras.Model:
+    def _build_model(self, input_shape: tuple[int, ...]) -> keras.Model:
         """Build the neural network model architecture.
 
         Parameters:
@@ -72,7 +69,7 @@ class NNModel:
 
     def _create_sequences(
         self, data: np.ndarray, seq_length: int, forecast_horizon: int
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Create input sequences and target values from time series data.
 
         Parameters:
@@ -97,13 +94,12 @@ class NNModel:
             )  # Only price column for target
         return np.array(X), np.array(y)
 
-    @check_types
     def _prepare_data(
         self,
         price_data: DataFrame[PriceDataSchema],
-        weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
+        weather_data: DataFrame[WeatherDataSchema] | None = None,
         train_split: float = 0.8,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Prepare the data for training and testing.
 
         Parameters:
@@ -159,11 +155,10 @@ class NNModel:
 
         return X_train, y_train, X_test, y_test
 
-    @check_types
     def fit(
         self,
         price_data: DataFrame[PriceDataSchema],
-        weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
+        weather_data: DataFrame[WeatherDataSchema] | None = None,
         epochs: int = 50,
         batch_size: int = 32,
         validation_split: float = 0.2,
@@ -213,11 +208,10 @@ class NNModel:
 
         return history
 
-    @check_types
     def predict(
         self,
         price_data: DataFrame[PriceDataSchema],
-        weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
+        weather_data: DataFrame[WeatherDataSchema] | None = None,
     ) -> pd.DataFrame:
         """Generate price forecasts.
 

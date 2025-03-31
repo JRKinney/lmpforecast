@@ -7,13 +7,12 @@ Pandera schemas.
 
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Literal, Optional, Union
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 from gridstatus.ercot import Ercot
 from gridstatus.ercot_api.ercot_api import ErcotAPI
-from pandera.decorators import check_types
 from pandera.typing import DataFrame
 
 from src.utils.schemas import PriceDataSchema, WeatherDataSchema
@@ -28,7 +27,7 @@ class ErcotGridstatusIntegration:
     - Validate and preprocess the data using Pandera schemas
     """
 
-    def __init__(self, ercot_api_key: Optional[str] = None):
+    def __init__(self, ercot_api_key: str | None = None):
         """Initialize the ERCOT gridstatus integration.
 
         Args:
@@ -67,14 +66,13 @@ class ErcotGridstatusIntegration:
             "El Paso": "West",
         }
 
-    @check_types
     def fetch_price_data(
         self,
-        start_date: Union[str, datetime],
-        end_date: Union[str, datetime],
+        start_date: str | datetime,
+        end_date: str | datetime,
         price_node: str = "HB_HOUSTON",
         market: Literal["day_ahead", "real_time"] = "real_time",
-        resample_freq: Optional[str] = None,
+        resample_freq: str | None = None,
     ) -> DataFrame[PriceDataSchema]:
         """Fetch ERCOT price data for a specified date range and price node.
 
@@ -141,13 +139,12 @@ class ErcotGridstatusIntegration:
         except Exception as e:
             raise ValueError(f"Failed to fetch ERCOT price data: {str(e)}") from e
 
-    @check_types
     def fetch_weather_data(
         self,
-        start_date: Union[str, datetime],
-        end_date: Union[str, datetime],
+        start_date: str | datetime,
+        end_date: str | datetime,
         location: str = "Houston",
-        resample_freq: Optional[str] = None,
+        resample_freq: str | None = None,
     ) -> DataFrame[WeatherDataSchema]:
         """Fetch weather data for a specified date range and location.
 
@@ -348,7 +345,7 @@ class ErcotGridstatusIntegration:
         except Exception as e:
             raise ValueError(f"Failed to fetch ERCOT weather data: {str(e)}") from e
 
-    def get_available_price_nodes(self) -> Dict[str, str]:
+    def get_available_price_nodes(self) -> dict[str, str]:
         """Get a dictionary of available price nodes.
 
         Returns:
@@ -366,7 +363,7 @@ class ErcotGridstatusIntegration:
         }
 
     def fetch_system_wide_data(
-        self, start_date: Union[str, datetime], end_date: Union[str, datetime]
+        self, start_date: str | datetime, end_date: str | datetime
     ) -> pd.DataFrame:
         """Fetch system-wide data like load, generation by fuel type, etc.
 
@@ -390,7 +387,7 @@ class ErcotGridstatusIntegration:
             raise ValueError(f"Failed to fetch system-wide data: {str(e)}") from e
 
     def fetch_fuel_mix(
-        self, start_date: Union[str, datetime], end_date: Union[str, datetime]
+        self, start_date: str | datetime, end_date: str | datetime
     ) -> pd.DataFrame:
         """Fetch generation by fuel type data.
 
@@ -403,7 +400,7 @@ class ErcotGridstatusIntegration:
         """
         try:
             # Fetch daily data and concatenate
-            all_data: List[pd.DataFrame] = []
+            all_data: list[pd.DataFrame] = []
             current_date = pd.to_datetime(start_date)
             end = pd.to_datetime(end_date)
 

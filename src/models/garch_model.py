@@ -1,11 +1,10 @@
-from typing import Literal, Optional, Tuple
+from typing import Literal
 
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from arch import arch_model
 from arch.univariate import ARCHModelResult
-from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from sklearn.preprocessing import StandardScaler
 
@@ -46,17 +45,16 @@ class GARCHModel:
         self.mean = mean
         self.vol = vol
         self.dist = dist
-        self.model: Optional[arch_model] = None
-        self.result: Optional[ARCHModelResult] = None
+        self.model: arch_model | None = None
+        self.result: ARCHModelResult | None = None
         self.scaler = StandardScaler()
-        self.last_prices: Optional[np.ndarray] = None
+        self.last_prices: np.ndarray | None = None
 
-    @check_types
     def _prepare_data(
         self,
         price_data: DataFrame[PriceDataSchema],
-        weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
-    ) -> Tuple[pd.Series, Optional[np.ndarray]]:
+        weather_data: DataFrame[WeatherDataSchema] | None = None,
+    ) -> tuple[pd.Series, np.ndarray | None]:
         """Prepare data for GARCH modeling.
 
         Parameters:
@@ -94,11 +92,10 @@ class GARCHModel:
 
         return returns, X
 
-    @check_types
     def fit(
         self,
         price_data: DataFrame[PriceDataSchema],
-        weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
+        weather_data: DataFrame[WeatherDataSchema] | None = None,
         update: bool = True,
     ) -> "GARCHModel":
         """Fit the GARCH model to the data.
@@ -136,11 +133,10 @@ class GARCHModel:
 
         return self
 
-    @check_types
     def predict(
         self,
         forecast_horizon: int = 24,
-        weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
+        weather_data: DataFrame[WeatherDataSchema] | None = None,
     ) -> DataFrame[ForecastSchema]:
         """Generate variance forecasts.
 
@@ -190,7 +186,6 @@ class GARCHModel:
         # Return forecast dataframe (validation handled by decorator)
         return forecast_df
 
-    @check_types
     def calculate_confidence_intervals(
         self,
         mean_forecast: pd.DataFrame,

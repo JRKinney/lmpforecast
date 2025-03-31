@@ -4,21 +4,20 @@ This module provides functions for data preprocessing, feature engineering,
 and preparation of data for model training and prediction.
 """
 
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 import pandas as pd
 from pandas import DatetimeIndex
-from pandera.decorators import check_types
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
 from src.utils.schemas import PriceDataFrame, WeatherDataFrame
 
 
-@check_types
 def align_time_series(
     price_data: PriceDataFrame, weather_data: WeatherDataFrame
-) -> Tuple[PriceDataFrame, WeatherDataFrame]:
+) -> tuple[PriceDataFrame, WeatherDataFrame]:
     """Align price and weather data to ensure they have the same time index.
 
     Args:
@@ -37,7 +36,7 @@ def align_time_series(
     aligned_weather = weather_data.loc[start_date:end_date].copy()
 
     # Check if there are any missing time points and handle them
-    all_timestamps = pd.date_range(start=start_date, end=end_date, freq="H")
+    all_timestamps = pd.date_range(start=start_date, end=end_date, freq="h")
 
     # Reindex both dataframes to ensure they have the same timestamps
     aligned_price = aligned_price.reindex(all_timestamps)
@@ -115,7 +114,7 @@ def create_time_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def create_lag_features(
-    df: pd.DataFrame, column: str, lag_hours: Optional[List[int]] = None
+    df: pd.DataFrame, column: str, lag_hours: list[int] | None = None
 ) -> pd.DataFrame:
     """Create lagged features for a specified column.
 
@@ -141,8 +140,8 @@ def create_lag_features(
 def create_rolling_features(
     df: pd.DataFrame,
     column: str,
-    windows: Optional[List[int]] = None,
-    functions: Optional[Dict[str, Callable]] = None,
+    windows: list[int] | None = None,
+    functions: dict[str, Callable] | None = None,
 ) -> pd.DataFrame:
     """Create rolling window features for a specified column.
 
@@ -177,7 +176,6 @@ def create_rolling_features(
     return result
 
 
-@check_types
 def prepare_data_for_model(
     price_data: PriceDataFrame,
     weather_data: WeatherDataFrame,
@@ -187,7 +185,7 @@ def prepare_data_for_model(
     include_lags: bool = True,
     include_rolling: bool = True,
     scale_features: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Prepare data for model training or prediction.
 
     Args:
@@ -314,12 +312,11 @@ def prepare_data_for_model(
     return result
 
 
-@check_types
 def preprocess_data(
     price_data: PriceDataFrame,
-    weather_data: Optional[WeatherDataFrame] = None,
+    weather_data: WeatherDataFrame,
     scale: bool = True,
-) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     """Preprocess and combine price and weather data for modeling.
 
     Parameters:
@@ -340,18 +337,14 @@ def preprocess_data(
     # Start with price data
     data = price_data[["price"]].copy()
 
-    # Add weather data if provided
-    if weather_data is not None:
-        # Align time series
-        price_aligned, weather_aligned = align_time_series(price_data, weather_data)
+    # Align time series
+    price_aligned, weather_aligned = align_time_series(price_data, weather_data)
 
-        # Drop redundant columns
-        weather_cols = [
-            col for col in weather_aligned.columns if col not in ["location"]
-        ]
+    # Drop redundant columns
+    weather_cols = [col for col in weather_aligned.columns if col not in ["location"]]
 
-        # Join weather data to price data
-        data = price_aligned[["price"]].join(weather_aligned[weather_cols])
+    # Join weather data to price data
+    data = price_aligned[["price"]].join(weather_aligned[weather_cols])
 
     # Create features for time of day and day of week
     data["hour"] = data.index.hour
@@ -367,7 +360,7 @@ def preprocess_data(
     data.drop(["hour", "day_of_week"], axis=1, inplace=True)
 
     # Scale the data if requested
-    scalers: Dict[str, Any] = {}
+    scalers: dict[str, Any] = {}
     if scale:
         # Scale price
         price_scaler = StandardScaler()
@@ -391,8 +384,8 @@ def preprocess_data(
 
 def add_lagged_features(
     data: pd.DataFrame,
-    lag_cols: List[str],
-    lag_periods: Optional[List[int]] = None,
+    lag_cols: list[str],
+    lag_periods: list[int] | None = None,
 ) -> pd.DataFrame:
     """Add lagged values of specified columns as new features.
 
@@ -427,8 +420,8 @@ def add_lagged_features(
 
 def calculate_rolling_statistics(
     data: pd.DataFrame,
-    window_sizes: Optional[List[int]] = None,
-    features: Optional[List[str]] = None,
+    window_sizes: list[int] | None = None,
+    features: list[str] | None = None,
 ) -> pd.DataFrame:
     """Calculate rolling statistics for specified features.
 
@@ -482,7 +475,7 @@ def calculate_rolling_statistics(
 
 def train_test_split_time_series(
     data: pd.DataFrame, train_ratio: float = 0.8
-) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
+) -> tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
     """Split time series data into training and testing sets based on time.
 
     Parameters:

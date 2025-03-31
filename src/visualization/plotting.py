@@ -4,23 +4,19 @@ This module contains functions for creating interactive visualizations of
 price forecasts, volatility forecasts, and model performance evaluations.
 """
 
-from typing import Optional
-
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
-from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from plotly.subplots import make_subplots
 
 from src.utils.schemas import ForecastSchema, PriceDataSchema, WeatherDataSchema
 
 
-@check_types
 def plot_price_forecast(
     forecasts: DataFrame[ForecastSchema],
     historical_data: DataFrame[PriceDataSchema],
-    title: Optional[str] = "ERCOT Price Forecast",
+    title: str | None = "ERCOT Price Forecast",
 ) -> go.Figure:
     """Plot price forecasts with confidence intervals.
 
@@ -98,7 +94,7 @@ def plot_price_forecast(
 def plot_volatility_forecast(
     variance_forecast: DataFrame,
     historical_volatility: DataFrame,
-    title: Optional[str] = "ERCOT Price Volatility Forecast",
+    title: str | None = "ERCOT Price Volatility Forecast",
 ) -> go.Figure:
     """Plot volatility forecasts with historical volatility.
 
@@ -154,13 +150,12 @@ def plot_volatility_forecast(
     return fig
 
 
-@check_types
 def plot_price_components(
     price_data: DataFrame[PriceDataSchema],
     weather_data: DataFrame[WeatherDataSchema],
     lookback_window: int = 168,
     forecast_window: int = 24,
-    title: Optional[str] = "ERCOT Price Components",
+    title: str | None = "ERCOT Price Components",
 ) -> go.Figure:
     """Plot price components including price vs. temperature, hourly patterns, etc.
 
@@ -291,8 +286,8 @@ def plot_price_components(
 def plot_model_performance(
     actual_prices: pd.Series,
     forecasted_prices: pd.Series,
-    train_test_split_date: Optional[str] = None,
-    title: Optional[str] = "Model Performance Evaluation",
+    train_test_split_date: str | None = None,
+    title: str | None = "Model Performance Evaluation",
 ) -> go.Figure:
     """Evaluate and visualize model performance.
 

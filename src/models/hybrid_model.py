@@ -7,12 +7,11 @@ and GARCH models to provide accurate price forecasts with confidence intervals.
 import logging
 import os
 import pickle
-from typing import Any, Dict, List, Literal, Optional, Tuple
+from typing import Any, Literal
 
 import numpy as np
 import pandas as pd
 from arch import arch_model
-from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import LSTM, Dense, Dropout
@@ -65,22 +64,21 @@ class HybridModel:
         self.dist = dist
 
         # Initialize models to None (will be created during fit)
-        self.nn_model: Optional[Sequential] = None
-        self.garch_model: Optional[arch_model] = None
+        self.nn_model: Sequential | None = None
+        self.garch_model: arch_model | None = None
 
         # Store the features used for the neural network model
-        self.feature_columns: List[str] = []
+        self.feature_columns: list[str] = []
 
         logger.info(
             f"Initialized HybridModel with seq_length={seq_length}, forecast_horizon={forecast_horizon}"
         )
 
-    @check_types
     def _preprocess_data(
         self,
         price_data: DataFrame[PriceDataSchema],
         weather_data: DataFrame[WeatherDataSchema],
-    ) -> Tuple[np.ndarray, np.ndarray, Dict[str, Any]]:
+    ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
         """Preprocess the price and weather data for model training.
 
         Args:
@@ -148,8 +146,8 @@ class HybridModel:
         return X, y, preprocessing_info
 
     def _create_sequences(
-        self, data: pd.DataFrame, feature_columns: List[str]
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self, data: pd.DataFrame, feature_columns: list[str]
+    ) -> tuple[np.ndarray, np.ndarray]:
         """Create input sequences and target values for the neural network.
 
         Args:
@@ -182,7 +180,7 @@ class HybridModel:
 
         return np.array(X_list), np.array(y_list)
 
-    def _build_nn_model(self, input_shape: Tuple[int, int]) -> Sequential:
+    def _build_nn_model(self, input_shape: tuple[int, int]) -> Sequential:
         """Build the neural network model architecture.
 
         Args:
@@ -205,7 +203,6 @@ class HybridModel:
 
         return model
 
-    @check_types
     def fit(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -214,7 +211,7 @@ class HybridModel:
         nn_batch_size: int = 32,
         nn_validation_split: float = 0.2,
         verbose: int = 1,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Train both the neural network and GARCH components of the hybrid model.
 
         Args:
@@ -278,7 +275,6 @@ class HybridModel:
         logger.info("Model training completed successfully")
         return metrics
 
-    @check_types
     def predict(
         self,
         price_data: DataFrame[PriceDataSchema],

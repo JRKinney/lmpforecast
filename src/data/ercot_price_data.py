@@ -6,7 +6,7 @@ from various sources, ensuring type safety and data integrity through Pandera sc
 
 import os
 from datetime import datetime
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -21,7 +21,7 @@ class ErcotPriceData:
     - Apply transformations for analysis and modeling
     """
 
-    def __init__(self, data_dir: Optional[str] = None):
+    def __init__(self, data_dir: str | None = None):
         """Initialize the ERCOT price data loader.
 
         Args:
@@ -48,10 +48,10 @@ class ErcotPriceData:
 
     def load_data(
         self,
-        start_date: Union[str, datetime],
-        end_date: Union[str, datetime],
+        start_date: str | datetime,
+        end_date: str | datetime,
         price_node: str = "HB_HOUSTON",
-        resample_freq: Optional[str] = None,
+        resample_freq: str | None = None,
     ) -> pd.DataFrame:
         """Load ERCOT price data for a specified date range and price node.
 
@@ -120,7 +120,7 @@ class ErcotPriceData:
         # Return the data (validation handled by decorator)
         return price_data
 
-    def get_available_nodes(self) -> Dict[str, str]:
+    def get_available_nodes(self) -> dict[str, str]:
         """Get a dictionary of available price nodes.
 
         Returns:
@@ -176,7 +176,7 @@ class ErcotPriceData:
         # Return cleaned data (validation handled by decorator)
         return cleaned_data
 
-    def calculate_summary_statistics(self, data: pd.DataFrame) -> Dict[str, Any]:
+    def calculate_summary_statistics(self, data: pd.DataFrame) -> dict[str, Any]:
         """Calculate summary statistics for the price data.
 
         Args:
