@@ -1,0 +1,55 @@
+repos:
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: end-of-file-fixer
+    -   id: check-yaml
+    -   id: check-added-large-files
+        args: ['--maxkb=1000']
+    -   id: debug-statements
+    -   id: check-merge-conflict
+    -   id: check-toml
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.13.2
+    hooks:
+    -   id: isort
+        name: isort (python)
+        args: ["--profile", "black", "--filter-files"]
+
+-   repo: https://github.com/psf/black
+    rev: 24.1.1
+    hooks:
+    -   id: black
+        language_version: python3
+
+-   repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: v0.1.15
+    hooks:
+    -   id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+
+-   repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.8.0
+    hooks:
+    -   id: mypy
+        additional_dependencies: [types-requests, types-PyYAML, pandas-stubs, types-setuptools]
+        args: [--ignore-missing-imports, --disallow-untyped-defs, --disallow-incomplete-defs]
+        exclude: ^(tests/|docs/)
+
+-   repo: https://github.com/nbQA-dev/nbQA
+    rev: 1.7.1
+    hooks:
+    -   id: nbqa-black
+        additional_dependencies: [black==24.1.1]
+    -   id: nbqa-isort
+        additional_dependencies: [isort==5.13.2]
+    -   id: nbqa-ruff
+        additional_dependencies: [ruff==0.1.15]
+
+-   repo: https://github.com/kynan/nbstripout
+    rev: 0.6.1
+    hooks:
+    -   id: nbstripout
+        args: [--extra-keys, metadata.kernelspec metadata.language_info.version] 

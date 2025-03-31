@@ -1,302 +1,161 @@
 """
-Pandera schemas for data validation across the ERCOT price forecasting project.
+Pandera schemas for data validation in the ERCOT price forecasting project.
 
-This module defines schemas for price data, weather data, and forecast outputs
-to ensure data consistency and validity throughout the application.
+This module defines schemas for validating price and weather data structures
+to ensure data consistency throughout the forecasting pipeline.
 """
 
-from typing import Optional, List, Dict, Any, Union, Literal, TypeVar, Generic
 import pandas as pd
-import numpy as np
 import pandera as pa
-from pandera.typing import Series, DataFrame, Index
 
 
-# Schema for price data
-class PriceDataSchema(pa.SchemaModel):
+# Define the price data schema
+PriceDataSchema = pa.DataFrameSchema(
+    columns={
+        "price": pa.Column(
+            float,
+            checks=pa.Check.ge(0.0),
+            description="Electricity price in $/MWh",
+        ),
+        "price_node": pa.Column(
+            str,
+            nullable=True,
+            required=False,
+            description="Price node identifier (e.g., HB_HOUSTON)",
+        ),
+    },
+    index=pa.Index(
+        pd.DatetimeIndex,
+        description="Time index of price data"
+    ),
+    strict=False,  # Allow extra columns
+    coerce=True,   # Attempt to coerce data types
+)
+
+
+# Define the weather data schema
+WeatherDataSchema = pa.DataFrameSchema(
+    columns={
+        "temperature": pa.Column(
+            float,
+            description="Temperature in degrees Celsius",
+        ),
+        "humidity": pa.Column(
+            float,
+            checks=[pa.Check.ge(0.0), pa.Check.le(100.0)],
+            description="Relative humidity percentage",
+        ),
+        "wind_speed": pa.Column(
+            float,
+            checks=pa.Check.ge(0.0),
+            description="Wind speed in meters per second",
+        ),
+        "solar_irradiance": pa.Column(
+            float,
+            checks=pa.Check.ge(0.0),
+            description="Solar irradiance in W/m²",
+        ),
+        "location": pa.Column(
+            str,
+            nullable=True,
+            required=False,
+            description="Weather location identifier",
+        ),
+    },
+    index=pa.Index(
+        pd.DatetimeIndex,
+        description="Time index of weather data"
+    ),
+    strict=False,  # Allow extra columns
+    coerce=True,   # Attempt to coerce data types
+)
+
+
+# Define the forecast data schema
+ForecastSchema = pa.DataFrameSchema(
+    columns={
+        "price_forecast": pa.Column(
+            float,
+            description="Forecasted electricity price in $/MWh",
+        ),
+        "variance_forecast": pa.Column(
+            float,
+            checks=pa.Check.ge(0.0),
+            description="Forecasted price variance",
+        ),
+        "lower_bound": pa.Column(
+            float,
+            description="Lower confidence interval bound",
+        ),
+        "upper_bound": pa.Column(
+            float,
+            description="Upper confidence interval bound",
+        ),
+    },
+    index=pa.Index(
+        pd.DatetimeIndex,
+        description="Time index of forecast data"
+    ),
+    checks=[
+        # Ensure upper bound is greater than or equal to lower bound
+        pa.Check(lambda df: df["upper_bound"] >= df["lower_bound"], 
+                 element_wise=True,
+                 error="Upper bound must be greater than or equal to lower bound"),
+        # Ensure forecast is within bounds
+        pa.Check(lambda df: (df["price_forecast"] >= df["lower_bound"]) & 
+                          (df["price_forecast"] <= df["upper_bound"]), 
+                 element_wise=True,
+                 error="Forecast must be within confidence bounds")
+    ],
+    strict=False,  # Allow extra columns
+    coerce=True,   # Attempt to coerce data types
+)
+
+
+# Schema validation functions
+def validate_price_data(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Schema for ERCOT price data.
-    
-    Validates:
-    - Price values are non-negative
-    - Required columns are present
-    - Price node information is included
-    - Index is a datetime index
-    """
-    # Price column (must be non-negative)
-    price: Series[float] = pa.Field(
-        ge=0.0,  # Greater than or equal to zero
-        description="Price in $/MWh"
-    )
-    
-    # Price node column (categorical)
-    price_node: Series[str] = pa.Field(
-        description="ERCOT price node identifier"
-    )
-    
-    # Index must be a datetime
-    index: Index[pd.DatetimeIndex] = pa.Field(
-        description="Timestamp of the price data point"
-    )
-    
-    # Additional schema-level checks
-    class Config:
-        """Configuration for the price data schema"""
-        strict = True
-        coerce = True
-
-
-# Schema for weather data
-class WeatherDataSchema(pa.SchemaModel):
-    """
-    Schema for weather data.
-    
-    Validates:
-    - Temperature ranges are plausible
-    - Required columns are present
-    - Location information is included
-    - Index is a datetime index aligned with price data
-    """
-    # Temperature columns with physical constraints
-    temperature: Series[float] = pa.Field(
-        ge=-50.0,  # Greater than or equal to -50°C (extreme cold)
-        le=60.0,   # Less than or equal to 60°C (extreme heat)
-        description="Temperature in degrees Celsius"
-    )
-    
-    # Wind speed (non-negative)
-    wind_speed: Series[float] = pa.Field(
-        ge=0.0,
-        description="Wind speed in m/s"
-    )
-    
-    # Humidity (between 0-100%)
-    humidity: Series[float] = pa.Field(
-        ge=0.0,
-        le=100.0,
-        description="Relative humidity percentage"
-    )
-    
-    # Solar irradiance (non-negative)
-    solar_irradiance: Series[float] = pa.Field(
-        ge=0.0,
-        description="Solar irradiance in W/m²"
-    )
-    
-    # Location column
-    location: Series[str] = pa.Field(
-        description="Weather measurement location"
-    )
-    
-    # Index must be a datetime
-    index: Index[pd.DatetimeIndex] = pa.Field(
-        description="Timestamp of the weather data point"
-    )
-    
-    # Additional schema-level checks
-    class Config:
-        """Configuration for the weather data schema"""
-        strict = True
-        coerce = True
-
-
-# Schema for price forecasts
-class PriceForecastSchema(pa.SchemaModel):
-    """
-    Schema for price forecast outputs.
-    
-    Validates:
-    - Forecast values are non-negative
-    - Confidence bounds are properly ordered (lower <= forecast <= upper)
-    - Required columns are present
-    - Index is a datetime index
-    """
-    # Price forecast column (non-negative)
-    price_forecast: Series[float] = pa.Field(
-        ge=0.0,
-        description="Forecasted price in $/MWh"
-    )
-    
-    # Lower confidence bound (non-negative)
-    lower_bound: Series[float] = pa.Field(
-        ge=0.0,
-        description="Lower bound of forecast confidence interval"
-    )
-    
-    # Upper confidence bound (non-negative)
-    upper_bound: Series[float] = pa.Field(
-        ge=0.0,
-        description="Upper bound of forecast confidence interval"
-    )
-    
-    # Index must be a datetime
-    index: Index[pd.DatetimeIndex] = pa.Field(
-        description="Timestamp of the forecasted data point"
-    )
-    
-    @pa.check("upper_bound", "lower_bound")
-    def upper_bound_greater_than_lower(cls, upper_bound: Series, lower_bound: Series) -> Series[bool]:
-        """Check that upper bound is greater than or equal to lower bound."""
-        return upper_bound >= lower_bound
-    
-    @pa.check("price_forecast", "upper_bound", "lower_bound")
-    def forecast_within_bounds(cls, forecast: Series, upper: Series, lower: Series) -> Series[bool]:
-        """Check that forecast is within the confidence bounds."""
-        return (forecast <= upper) & (forecast >= lower)
-    
-    # Additional schema-level checks
-    class Config:
-        """Configuration for the forecast schema"""
-        strict = True
-        coerce = True
-
-
-# Schema for neural network inputs
-class NeuralNetworkInputSchema(pa.SchemaModel):
-    """
-    Schema for data prepared for neural network inputs.
-    
-    Validates:
-    - Features are properly scaled
-    - Required columns are present
-    - Index is a datetime index
-    """
-    # Price lags (scaled between -1 and 1)
-    price_lag_1: Series[float] = pa.Field(
-        ge=-10.0, le=10.0,
-        description="1-hour lagged price (scaled)"
-    )
-    
-    price_lag_24: Series[float] = pa.Field(
-        ge=-10.0, le=10.0,
-        description="24-hour lagged price (scaled)"
-    )
-    
-    # Day of week (one-hot encoded)
-    day_of_week_0: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Monday indicator (one-hot encoded)"
-    )
-    
-    day_of_week_1: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Tuesday indicator (one-hot encoded)"
-    )
-    
-    day_of_week_2: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Wednesday indicator (one-hot encoded)"
-    )
-    
-    day_of_week_3: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Thursday indicator (one-hot encoded)"
-    )
-    
-    day_of_week_4: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Friday indicator (one-hot encoded)"
-    )
-    
-    day_of_week_5: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Saturday indicator (one-hot encoded)"
-    )
-    
-    day_of_week_6: Series[int] = pa.Field(
-        isin=[0, 1],
-        description="Sunday indicator (one-hot encoded)"
-    )
-    
-    # Hour of day (scaled)
-    hour: Series[float] = pa.Field(
-        ge=0.0, le=1.0,
-        description="Hour of day (scaled between 0 and 1)"
-    )
-    
-    # Weather features (scaled)
-    temperature: Series[float] = pa.Field(
-        ge=-10.0, le=10.0,
-        description="Temperature (scaled)"
-    )
-    
-    wind_speed: Series[float] = pa.Field(
-        ge=-10.0, le=10.0,
-        description="Wind speed (scaled)"
-    )
-    
-    humidity: Series[float] = pa.Field(
-        ge=-10.0, le=10.0,
-        description="Humidity (scaled)"
-    )
-    
-    solar_irradiance: Series[float] = pa.Field(
-        ge=-10.0, le=10.0,
-        description="Solar irradiance (scaled)"
-    )
-    
-    # Index must be a datetime
-    index: Index[pd.DatetimeIndex] = pa.Field(
-        description="Timestamp of the input data point"
-    )
-    
-    # Additional schema-level checks
-    class Config:
-        """Configuration for the neural network input schema"""
-        strict = False  # Allow extra columns
-        coerce = True
-
-
-# Schema for GARCH model inputs
-class GarchInputSchema(pa.SchemaModel):
-    """
-    Schema for data prepared for GARCH model inputs.
-    
-    Validates:
-    - Residuals are properly calculated
-    - Required columns are present
-    - Index is a datetime index
-    """
-    # Residuals from neural network prediction
-    residual: Series[float] = pa.Field(
-        description="Residual (actual - predicted) from neural network"
-    )
-    
-    # Index must be a datetime
-    index: Index[pd.DatetimeIndex] = pa.Field(
-        description="Timestamp of the input data point"
-    )
-    
-    # Additional schema-level checks
-    class Config:
-        """Configuration for the GARCH input schema"""
-        strict = False  # Allow extra columns
-        coerce = True
-
-
-# Function to validate dataframes against their schemas
-def validate_dataframe(
-    df: pd.DataFrame, 
-    schema: Union[type[PriceDataSchema], type[WeatherDataSchema], type[PriceForecastSchema]]
-) -> DataFrame:
-    """
-    Validate a dataframe against a schema.
+    Validate price data against the schema.
     
     Args:
-        df: DataFrame to validate
-        schema: Schema to validate against
+        data: Price data DataFrame
         
     Returns:
-        The validated DataFrame
+        Validated DataFrame
         
     Raises:
-        pa.errors.SchemaError: If validation fails
+        pa.errors.SchemaError: If data doesn't conform to schema
     """
-    try:
-        return schema.validate(df)
-    except pa.errors.SchemaError as e:
-        # Add more context to the error message
-        print(f"Schema validation failed: {e}")
-        print(f"DataFrame overview:\n{df.head()}")
-        print(f"DataFrame info:\n{df.info()}")
-        raise 
+    return PriceDataSchema.validate(data)
+
+
+def validate_weather_data(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Validate weather data against the schema.
+    
+    Args:
+        data: Weather data DataFrame
+        
+    Returns:
+        Validated DataFrame
+        
+    Raises:
+        pa.errors.SchemaError: If data doesn't conform to schema
+    """
+    return WeatherDataSchema.validate(data)
+
+
+def validate_forecast(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Validate forecast data against the schema.
+    
+    Args:
+        data: Forecast DataFrame
+        
+    Returns:
+        Validated DataFrame
+        
+    Raises:
+        pa.errors.SchemaError: If data doesn't conform to schema
+    """
+    return ForecastSchema.validate(data) 
