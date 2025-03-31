@@ -119,4 +119,4 @@ The project has GitHub Actions workflows that will automatically run tests and q
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the project's MIT License. 
+By contributing, you agree that your contributions will be licensed under the project's MIT License.

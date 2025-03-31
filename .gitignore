@@ -129,4 +129,4 @@ outputs/
 .cache
 
 # Ignore mypy cache
-.mypy_cache/ 
+.mypy_cache/

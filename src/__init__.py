@@ -1,5 +1,4 @@
-"""
-ERCOT Price Forecasting Package
+"""ERCOT Price Forecasting Package
 
 This package implements a hybrid neural network + GARCH model for forecasting
 ERCOT electricity prices, with comprehensive type checking and data validation.
@@ -13,6 +12,6 @@ The key components include:
 - Integration with gridstatus library for real ERCOT data
 """
 
-__version__ = '0.2.0'
+__version__ = "0.2.0"
 
-# Main module initialization 
+# Main module initialization

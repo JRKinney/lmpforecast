@@ -1,13 +1,13 @@
-"""
-Pandera schemas for data validation in the ERCOT price forecasting project.
+"""Pandera schemas for data validation in the ERCOT price forecasting project.
 
 This module defines schemas for validating price and weather data structures
 to ensure data consistency throughout the forecasting pipeline.
 """
 
+from typing import cast
+
 import pandas as pd
 import pandera as pa
-
 
 # Define the price data schema
 PriceDataSchema = pa.DataFrameSchema(
@@ -24,12 +24,9 @@ PriceDataSchema = pa.DataFrameSchema(
             description="Price node identifier (e.g., HB_HOUSTON)",
         ),
     },
-    index=pa.Index(
-        pd.DatetimeIndex,
-        description="Time index of price data"
-    ),
+    index=pa.Index(pd.DatetimeIndex, description="Time index of price data"),
     strict=False,  # Allow extra columns
-    coerce=True,   # Attempt to coerce data types
+    coerce=True,  # Attempt to coerce data types
 )
 
 
@@ -62,12 +59,9 @@ WeatherDataSchema = pa.DataFrameSchema(
             description="Weather location identifier",
         ),
     },
-    index=pa.Index(
-        pd.DatetimeIndex,
-        description="Time index of weather data"
-    ),
+    index=pa.Index(pd.DatetimeIndex, description="Time index of weather data"),
     strict=False,  # Allow extra columns
-    coerce=True,   # Attempt to coerce data types
+    coerce=True,  # Attempt to coerce data types
 )
 
 
@@ -92,70 +86,68 @@ ForecastSchema = pa.DataFrameSchema(
             description="Upper confidence interval bound",
         ),
     },
-    index=pa.Index(
-        pd.DatetimeIndex,
-        description="Time index of forecast data"
-    ),
+    index=pa.Index(pd.DatetimeIndex, description="Time index of forecast data"),
     checks=[
         # Ensure upper bound is greater than or equal to lower bound
-        pa.Check(lambda df: df["upper_bound"] >= df["lower_bound"], 
-                 element_wise=True,
-                 error="Upper bound must be greater than or equal to lower bound"),
+        pa.Check(
+            lambda df: df["upper_bound"] >= df["lower_bound"],
+            element_wise=True,
+            error="Upper bound must be greater than or equal to lower bound",
+        ),
         # Ensure forecast is within bounds
-        pa.Check(lambda df: (df["price_forecast"] >= df["lower_bound"]) & 
-                          (df["price_forecast"] <= df["upper_bound"]), 
-                 element_wise=True,
-                 error="Forecast must be within confidence bounds")
+        pa.Check(
+            lambda df: (df["price_forecast"] >= df["lower_bound"])
+            & (df["price_forecast"] <= df["upper_bound"]),
+            element_wise=True,
+            error="Forecast must be within confidence bounds",
+        ),
     ],
     strict=False,  # Allow extra columns
-    coerce=True,   # Attempt to coerce data types
+    coerce=True,  # Attempt to coerce data types
 )
 
 
 # Schema validation functions
 def validate_price_data(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Validate price data against the schema.
-    
+    """Validate price data against the schema.
+
     Args:
         data: Price data DataFrame
-        
+
     Returns:
         Validated DataFrame
-        
+
     Raises:
         pa.errors.SchemaError: If data doesn't conform to schema
     """
-    return PriceDataSchema.validate(data)
+    return cast(pd.DataFrame, PriceDataSchema.validate(data))
 
 
 def validate_weather_data(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Validate weather data against the schema.
-    
+    """Validate weather data against the schema.
+
     Args:
         data: Weather data DataFrame
-        
+
     Returns:
         Validated DataFrame
-        
+
     Raises:
         pa.errors.SchemaError: If data doesn't conform to schema
     """
-    return WeatherDataSchema.validate(data)
+    return cast(pd.DataFrame, WeatherDataSchema.validate(data))
 
 
 def validate_forecast(data: pd.DataFrame) -> pd.DataFrame:
-    """
-    Validate forecast data against the schema.
-    
+    """Validate forecast data against the schema.
+
     Args:
         data: Forecast DataFrame
-        
+
     Returns:
         Validated DataFrame
-        
+
     Raises:
         pa.errors.SchemaError: If data doesn't conform to schema
     """
-    return ForecastSchema.validate(data) 
+    return cast(pd.DataFrame, ForecastSchema.validate(data))

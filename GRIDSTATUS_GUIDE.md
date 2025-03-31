@@ -169,4 +169,4 @@ If all else fails, the system will automatically fall back to synthetic data gen
 
 - [Gridstatus GitHub Repository](https://github.com/gridstatus/gridstatus)
 - [ERCOT Website](https://www.ercot.com/)
-- [GridStatus.io](https://www.gridstatus.io/) - Preview of data provided by gridstatus 
+- [GridStatus.io](https://www.gridstatus.io/) - Preview of data provided by gridstatus

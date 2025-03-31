@@ -113,4 +113,4 @@ MIT License
 ## Acknowledgements
 
 - ERCOT for providing electricity market data
-- The gridstatus project for API access to real-time grid data 
+- The gridstatus project for API access to real-time grid data
