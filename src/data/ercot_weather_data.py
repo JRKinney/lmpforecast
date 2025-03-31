@@ -11,6 +11,7 @@ from typing import Any, Dict, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
+from pandera.decorators import check_types
 from pandera.typing import DataFrame
 
 from src.utils.schemas import WeatherDataSchema
@@ -51,6 +52,7 @@ class ErcotWeatherData:
             "El Paso": (31.7619, -106.4850),
         }
 
+    @check_types
     def load_data(
         self,
         start_date: Union[str, datetime],
@@ -165,12 +167,8 @@ class ErcotWeatherData:
             resampled_data["location"] = location
             weather_data = resampled_data
 
-        # Validate against schema
-        try:
-            validated_data = WeatherDataSchema.validate(weather_data)
-            return validated_data
-        except Exception as e:
-            raise ValueError(f"Data validation failed: {str(e)}") from e
+        # Return data (validation handled by decorator)
+        return weather_data
 
     def get_available_locations(self) -> Dict[str, Tuple[float, float]]:
         """Get a dictionary of available locations with their coordinates.
@@ -180,6 +178,7 @@ class ErcotWeatherData:
         """
         return self.available_locations.copy()
 
+    @check_types
     def clean_outliers(
         self,
         data: DataFrame[WeatherDataSchema],
@@ -243,9 +242,10 @@ class ErcotWeatherData:
             lower=0
         )
 
-        # Validate after cleaning
-        return WeatherDataSchema.validate(cleaned_data)
+        # Return cleaned data (validation handled by decorator)
+        return cleaned_data
 
+    @check_types
     def calculate_summary_statistics(
         self, data: DataFrame[WeatherDataSchema]
     ) -> Dict[str, Any]:
@@ -288,6 +288,7 @@ class ErcotWeatherData:
 
         return stats
 
+    @check_types
     def get_extreme_weather_events(
         self, data: DataFrame[WeatherDataSchema], percentile_threshold: float = 0.95
     ) -> pd.DataFrame:

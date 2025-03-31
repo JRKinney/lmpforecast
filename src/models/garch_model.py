@@ -5,6 +5,7 @@ import pandas as pd
 import statsmodels.api as sm
 from arch import arch_model
 from arch.univariate import ARCHModelResult
+from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from sklearn.preprocessing import StandardScaler
 
@@ -50,6 +51,7 @@ class GARCHModel:
         self.scaler = StandardScaler()
         self.last_prices: Optional[np.ndarray] = None
 
+    @check_types
     def _prepare_data(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -92,6 +94,7 @@ class GARCHModel:
 
         return returns, X
 
+    @check_types
     def fit(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -133,6 +136,7 @@ class GARCHModel:
 
         return self
 
+    @check_types
     def predict(
         self,
         forecast_horizon: int = 24,
@@ -183,9 +187,10 @@ class GARCHModel:
         # Add standard deviation forecast (volatility)
         forecast_df["volatility_forecast"] = np.sqrt(forecast_df["variance_forecast"])
 
-        # Validate against schema
-        return ForecastSchema.validate(forecast_df)
+        # Return forecast dataframe (validation handled by decorator)
+        return forecast_df
 
+    @check_types
     def calculate_confidence_intervals(
         self,
         mean_forecast: pd.DataFrame,
@@ -232,5 +237,5 @@ class GARCHModel:
             index=common_index,
         )
 
-        # Validate against schema
-        return ForecastSchema.validate(result_df)
+        # Return result dataframe (validation handled by decorator)
+        return result_df

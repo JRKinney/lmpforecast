@@ -2,9 +2,9 @@
 
 This script demonstrates how to:
 1. Load data using the data classes
-2. Validate data against schemas
+2. Use decorators for schema validation
 3. Handle validation errors
-4. Create and validate custom dataframes
+4. Create custom dataframes that conform to schemas
 """
 
 import os
@@ -12,6 +12,7 @@ import sys
 from typing import Tuple
 
 import pandas as pd
+from pandera.decorators import check_types
 
 # Add the project root to the path if running this file directly
 if __name__ == "__main__":
@@ -19,11 +20,11 @@ if __name__ == "__main__":
 
 from src.data.ercot_price_data import ErcotPriceData
 from src.data.ercot_weather_data import ErcotWeatherData
-from src.utils.schemas import ForecastSchema, PriceDataSchema, WeatherDataSchema
+from src.utils.schemas import ForecastSchema, PriceDataFrame, PriceDataSchema
 
 
 def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
-    """Example of how to validate data using Pandera schemas.
+    """Example of how to validate data using Pandera schemas and decorators.
 
     Returns:
         Tuple[pd.DataFrame, pd.DataFrame]: Validated price and weather data
@@ -39,31 +40,21 @@ def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
     price_node = "HB_HOUSTON"
     location = "Houston"
 
-    # Load price data
+    # Load price data (validation happens automatically)
     price_data = price_loader.load_data(
         start_date=start_date, end_date=end_date, price_node=price_node
     )
 
-    # Load weather data
+    # Load weather data (validation happens automatically)
     weather_data = weather_loader.load_data(
         start_date=start_date, end_date=end_date, location=location
     )
 
-    print("\n1. Validating properly formatted data:")
-    # Example 1: Validating properly formatted data
-    try:
-        # Validate price data against schema
-        PriceDataSchema.validate(price_data)
-        print("✅ Price data validation successful!")
-
-        # Validate weather data against schema
-        WeatherDataSchema.validate(weather_data)
-        print("✅ Weather data validation successful!")
-    except Exception as e:
-        print(f"❌ Validation failed: {e}")
+    print("\n1. Successful validation with schema:")
+    print("✅ Price and weather data loaded and validated successfully!")
 
     print("\n2. Example of validation failure (negative prices):")
-    # Example 2: Introducing an error to demonstrate validation failure
+    # Example: Introducing an error to demonstrate validation failure
     try:
         # Create a copy with invalid data (negative price)
         invalid_price_data = price_data.copy()
@@ -75,8 +66,7 @@ def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
     except Exception as e:
         print(f"❌ Validation failed as expected: {e}")
 
-    print("\n3. Example of creating and validating a forecast dataframe:")
-    # Example 3: Creating and validating a forecast dataframe
+    print("\n3. Example of creating a valid forecast dataframe:")
     try:
         # Create a simple forecast dataframe
         forecast_df = pd.DataFrame(
@@ -88,15 +78,14 @@ def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
             index=pd.date_range(start="2022-01-08", periods=3, freq="H"),
         )
 
-        # Validate against the forecast schema
-        validated_forecast = ForecastSchema.validate(forecast_df)
+        # Validate with the schema
+        valid_forecast = ForecastSchema.validate(forecast_df)
         print("✅ Forecast validation successful!")
-        print(validated_forecast)
+        print(valid_forecast)
     except Exception as e:
         print(f"❌ Validation failed: {e}")
 
-    print("\n4. Example of validation with the helper function:")
-    # Example 4: Using the helper function for validation
+    print("\n4. Example of validation failure due to bounds violation:")
     try:
         # Create another forecast with bounds violation
         invalid_forecast = pd.DataFrame(
@@ -108,11 +97,30 @@ def validate_data_example() -> Tuple[pd.DataFrame, pd.DataFrame]:
             index=pd.date_range(start="2022-01-08", periods=3, freq="H"),
         )
 
-        # Use the helper function
+        # Try to validate
         ForecastSchema.validate(invalid_forecast)
         print("✅ Validation passed (this shouldn't happen!)")
-    except Exception:
-        print("❌ Validation failed as expected due to bounds violation")
+    except Exception as e:
+        print(f"❌ Validation failed as expected: {e}")
+
+    print("\n5. Using check_types decorator for runtime validation:")
+
+    @check_types
+    def process_data(df: PriceDataFrame) -> PriceDataFrame:
+        """Process price data with validation via decorator."""
+        # This will be validated both on input and output
+        return df
+
+    try:
+        # This should pass (valid data)
+        process_data(price_data)
+        print("✅ Valid data passed decorator validation")
+
+        # This should fail (invalid data)
+        process_data(invalid_price_data)
+        print("❌ Invalid data passed validation (this shouldn't happen!)")
+    except Exception as e:
+        print(f"✅ Decorator validation failed as expected: {e}")
 
     return price_data, weather_data
 

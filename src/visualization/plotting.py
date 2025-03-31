@@ -9,12 +9,14 @@ from typing import Optional
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
+from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from plotly.subplots import make_subplots
 
 from src.utils.schemas import ForecastSchema, PriceDataSchema, WeatherDataSchema
 
 
+@check_types
 def plot_price_forecast(
     forecasts: DataFrame[ForecastSchema],
     historical_data: DataFrame[PriceDataSchema],
@@ -152,6 +154,7 @@ def plot_volatility_forecast(
     return fig
 
 
+@check_types
 def plot_price_components(
     price_data: DataFrame[PriceDataSchema],
     weather_data: DataFrame[WeatherDataSchema],

@@ -9,15 +9,16 @@ from typing import Any, Callable, Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 from pandas import DatetimeIndex
-from pandera.typing import DataFrame
+from pandera.decorators import check_types
 from sklearn.preprocessing import MinMaxScaler, StandardScaler
 
-from src.utils.schemas import PriceDataSchema, WeatherDataSchema
+from src.utils.schemas import PriceDataFrame, WeatherDataFrame
 
 
+@check_types
 def align_time_series(
-    price_data: DataFrame[PriceDataSchema], weather_data: DataFrame[WeatherDataSchema]
-) -> Tuple[DataFrame[PriceDataSchema], DataFrame[WeatherDataSchema]]:
+    price_data: PriceDataFrame, weather_data: WeatherDataFrame
+) -> Tuple[PriceDataFrame, WeatherDataFrame]:
     """Align price and weather data to ensure they have the same time index.
 
     Args:
@@ -176,9 +177,10 @@ def create_rolling_features(
     return result
 
 
+@check_types
 def prepare_data_for_model(
-    price_data: DataFrame[PriceDataSchema],
-    weather_data: DataFrame[WeatherDataSchema],
+    price_data: PriceDataFrame,
+    weather_data: WeatherDataFrame,
     seq_length: int = 24,
     forecast_horizon: int = 24,
     include_time_features: bool = True,
@@ -312,18 +314,19 @@ def prepare_data_for_model(
     return result
 
 
+@check_types
 def preprocess_data(
-    price_data: DataFrame[PriceDataSchema],
-    weather_data: Optional[DataFrame[WeatherDataSchema]] = None,
+    price_data: PriceDataFrame,
+    weather_data: Optional[WeatherDataFrame] = None,
     scale: bool = True,
 ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
     """Preprocess and combine price and weather data for modeling.
 
     Parameters:
     -----------
-    price_data : DataFrame[PriceDataSchema]
+    price_data : pd.DataFrame
         DataFrame containing price data with datetime index
-    weather_data : Optional[DataFrame[WeatherDataSchema]], default=None
+    weather_data : Optional[pd.DataFrame], default=None
         DataFrame containing weather data with datetime index
     scale : bool, default=True
         Whether to standardize the data

@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
+from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from sklearn.preprocessing import StandardScaler
 from tensorflow import keras
@@ -96,6 +97,7 @@ class NNModel:
             )  # Only price column for target
         return np.array(X), np.array(y)
 
+    @check_types
     def _prepare_data(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -157,6 +159,7 @@ class NNModel:
 
         return X_train, y_train, X_test, y_test
 
+    @check_types
     def fit(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -210,6 +213,7 @@ class NNModel:
 
         return history
 
+    @check_types
     def predict(
         self,
         price_data: DataFrame[PriceDataSchema],

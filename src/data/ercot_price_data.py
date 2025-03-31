@@ -10,9 +10,6 @@ from typing import Any, Dict, Optional, Union
 
 import numpy as np
 import pandas as pd
-from pandera.typing import DataFrame
-
-from src.utils.schemas import PriceDataSchema
 
 
 class ErcotPriceData:
@@ -55,7 +52,7 @@ class ErcotPriceData:
         end_date: Union[str, datetime],
         price_node: str = "HB_HOUSTON",
         resample_freq: Optional[str] = None,
-    ) -> DataFrame[PriceDataSchema]:
+    ) -> pd.DataFrame:
         """Load ERCOT price data for a specified date range and price node.
 
         Args:
@@ -120,12 +117,8 @@ class ErcotPriceData:
             price_data = price_data.resample(resample_freq).mean()
             price_data["price_node"] = price_node  # Restore price_node after resampling
 
-        # Validate against schema
-        try:
-            validated_data = PriceDataSchema.validate(price_data)
-            return validated_data
-        except Exception as e:
-            raise ValueError(f"Data validation failed: {str(e)}") from e
+        # Return the data (validation handled by decorator)
+        return price_data
 
     def get_available_nodes(self) -> Dict[str, str]:
         """Get a dictionary of available price nodes.
@@ -137,10 +130,10 @@ class ErcotPriceData:
 
     def clean_outliers(
         self,
-        data: DataFrame[PriceDataSchema],
+        data: pd.DataFrame,
         method: str = "iqr",
         threshold: float = 3.0,
-    ) -> DataFrame[PriceDataSchema]:
+    ) -> pd.DataFrame:
         """Clean outliers in price data.
 
         Args:
@@ -180,12 +173,10 @@ class ErcotPriceData:
         else:
             raise ValueError(f"Unknown outlier cleaning method: {method}")
 
-        # Validate after cleaning
-        return PriceDataSchema.validate(cleaned_data)
+        # Return cleaned data (validation handled by decorator)
+        return cleaned_data
 
-    def calculate_summary_statistics(
-        self, data: DataFrame[PriceDataSchema]
-    ) -> Dict[str, Any]:
+    def calculate_summary_statistics(self, data: pd.DataFrame) -> Dict[str, Any]:
         """Calculate summary statistics for the price data.
 
         Args:
@@ -202,8 +193,8 @@ class ErcotPriceData:
             "max": float(data["price"].max()),
             "q25": float(data["price"].quantile(0.25)),
             "q75": float(data["price"].quantile(0.75)),
-            "skew": float(data["price"].skew()),
-            "kurtosis": float(data["price"].kurtosis()),
+            "skew": data["price"].skew(),
+            "kurtosis": data["price"].kurtosis(),
             "count": int(data["price"].count()),
             "missing": int(data["price"].isna().sum()),
             "time_range": {

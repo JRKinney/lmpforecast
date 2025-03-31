@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Literal, Optional, Tuple
 import numpy as np
 import pandas as pd
 from arch import arch_model
+from pandera.decorators import check_types
 from pandera.typing import DataFrame
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.layers import LSTM, Dense, Dropout
@@ -74,6 +75,7 @@ class HybridModel:
             f"Initialized HybridModel with seq_length={seq_length}, forecast_horizon={forecast_horizon}"
         )
 
+    @check_types
     def _preprocess_data(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -203,6 +205,7 @@ class HybridModel:
 
         return model
 
+    @check_types
     def fit(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -275,6 +278,7 @@ class HybridModel:
         logger.info("Model training completed successfully")
         return metrics
 
+    @check_types
     def predict(
         self,
         price_data: DataFrame[PriceDataSchema],
@@ -377,14 +381,8 @@ class HybridModel:
         # Ensure non-negative prices for lower bounds
         forecast_df["lower_bound"] = forecast_df["lower_bound"].clip(lower=0)
 
-        # Validate against the schema
-        try:
-            validated_forecast = ForecastSchema.validate(forecast_df)
-            return validated_forecast
-        except Exception as e:
-            logger.warning(f"Forecast validation failed: {e}")
-            logger.warning("Returning unvalidated forecast")
-            return forecast_df
+        # Return forecast dataframe (validation handled by decorator)
+        return forecast_df
 
     def save_models(self, save_path: str) -> None:
         """Save the trained models to disk.

@@ -13,6 +13,7 @@ import numpy as np
 import pandas as pd
 from gridstatus.ercot import Ercot
 from gridstatus.ercot_api.ercot_api import ErcotAPI
+from pandera.decorators import check_types
 from pandera.typing import DataFrame
 
 from src.utils.schemas import PriceDataSchema, WeatherDataSchema
@@ -66,6 +67,7 @@ class ErcotGridstatusIntegration:
             "El Paso": "West",
         }
 
+    @check_types
     def fetch_price_data(
         self,
         start_date: Union[str, datetime],
@@ -133,16 +135,13 @@ class ErcotGridstatusIntegration:
                     price_node  # Restore price_node after resampling
                 )
 
-            # Validate against schema
-            try:
-                validated_data = PriceDataSchema.validate(price_data)
-                return validated_data
-            except Exception as e:
-                raise ValueError(f"Data validation failed: {str(e)}") from e
+            # Return data (validation handled by decorator)
+            return price_data
 
         except Exception as e:
             raise ValueError(f"Failed to fetch ERCOT price data: {str(e)}") from e
 
+    @check_types
     def fetch_weather_data(
         self,
         start_date: Union[str, datetime],
@@ -343,12 +342,8 @@ class ErcotGridstatusIntegration:
                 resampled_data["location"] = location
                 weather_data = resampled_data
 
-            # Validate against schema
-            try:
-                validated_data = WeatherDataSchema.validate(weather_data)
-                return validated_data
-            except Exception as e:
-                raise ValueError(f"Weather data validation failed: {str(e)}") from e
+            # Return data (validation handled by decorator)
+            return weather_data
 
         except Exception as e:
             raise ValueError(f"Failed to fetch ERCOT weather data: {str(e)}") from e

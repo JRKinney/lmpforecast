@@ -130,3 +130,6 @@ outputs/
 
 # Ignore mypy cache
 .mypy_cache/
+
+# Ignore claude instructions
+CLAUDE.md

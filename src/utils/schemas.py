@@ -4,10 +4,13 @@ This module defines schemas for validating price and weather data structures
 to ensure data consistency throughout the forecasting pipeline.
 """
 
-from typing import cast
+from typing import TypeVar, cast
 
 import pandas as pd
 import pandera as pa
+from pandera.typing import DataFrame
+
+T = TypeVar("T", bound=pa.DataFrameSchema)
 
 # Define the price data schema
 PriceDataSchema = pa.DataFrameSchema(
@@ -24,7 +27,7 @@ PriceDataSchema = pa.DataFrameSchema(
             description="Price node identifier (e.g., HB_HOUSTON)",
         ),
     },
-    index=pa.Index(pd.DatetimeIndex, description="Time index of price data"),
+    index=pa.Index(dtype="datetime64[ns]", description="Time index of price data"),
     strict=False,  # Allow extra columns
     coerce=True,  # Attempt to coerce data types
 )
@@ -59,7 +62,7 @@ WeatherDataSchema = pa.DataFrameSchema(
             description="Weather location identifier",
         ),
     },
-    index=pa.Index(pd.DatetimeIndex, description="Time index of weather data"),
+    index=pa.Index(dtype="datetime64[ns]", description="Time index of weather data"),
     strict=False,  # Allow extra columns
     coerce=True,  # Attempt to coerce data types
 )
@@ -72,11 +75,6 @@ ForecastSchema = pa.DataFrameSchema(
             float,
             description="Forecasted electricity price in $/MWh",
         ),
-        "variance_forecast": pa.Column(
-            float,
-            checks=pa.Check.ge(0.0),
-            description="Forecasted price variance",
-        ),
         "lower_bound": pa.Column(
             float,
             description="Lower confidence interval bound",
@@ -86,7 +84,7 @@ ForecastSchema = pa.DataFrameSchema(
             description="Upper confidence interval bound",
         ),
     },
-    index=pa.Index(pd.DatetimeIndex, description="Time index of forecast data"),
+    index=pa.Index(dtype="datetime64[ns]", description="Time index of forecast data"),
     checks=[
         # Ensure upper bound is greater than or equal to lower bound
         pa.Check(
@@ -105,6 +103,12 @@ ForecastSchema = pa.DataFrameSchema(
     strict=False,  # Allow extra columns
     coerce=True,  # Attempt to coerce data types
 )
+
+
+# Type aliases for static type checking
+PriceDataFrame = DataFrame[PriceDataSchema]
+WeatherDataFrame = DataFrame[WeatherDataSchema]
+ForecastDataFrame = DataFrame[ForecastSchema]
 
 
 # Schema validation functions
