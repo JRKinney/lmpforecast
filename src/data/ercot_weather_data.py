@@ -59,7 +59,7 @@ class ErcotWeatherData:
         end_date: Union[str, datetime],
         location: str = "Houston",
         resample_freq: Optional[str] = None,
-    ) -> DataFrame[WeatherDataSchema]:
+    ) -> "DataFrame[WeatherDataSchema]":
         """Load weather data for a specified date range and location.
 
         Args:
